@@ -25,9 +25,8 @@ class MainActivity : AppCompatActivity() {
 
         if(PackageManager.PERMISSION_GRANTED != ActivityCompat.checkSelfPermission(this, "android.permission.ACTIVITY_RECOGNITION")){
             val permissions = arrayOf("android.permission.ACTIVITY_RECOGNITION")
-            ActivityCompat.requestPermissions(this, permissions, 1)
+            ActivityCompat.requestPermissions(this, permissions, 45)
         }
-
 
         ActivityRecognitionSensor.start(applicationContext, ActivityRecognitionSensor.Config().apply {
             sensorObserver = object: ActivityRecognitionSensor.Observer{

@@ -16,6 +16,7 @@
                 <action android:name="com.tappun.android.sensor.transition_activityrecognition.SENSOR_STOP" />
                 <action android:name="com.tappun.android.sensor.SENSOR_START" />
                 <action android:name="com.tappun.android.sensor.SENSOR_STOP" />
+                <action android:name="com.tappun.android.sensor.transition_activityrecognition.ACTION_PROCESS_ACTIVITY_TRANSITIONS" />
             </intent-filter>
         </receiver>
     </application>
