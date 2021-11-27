@@ -18,7 +18,11 @@ import com.awareframework.android.core.model.SensorConfig
 import com.google.android.gms.location.*
 import com.google.android.gms.tasks.OnSuccessListener
 import com.tappun.android.sensor.transition_activityrecognitionensortransition_activityrecognition.model.ActivityRecognitionData
+import java.util.*
+import kotlin.collections.ArrayList
+
 //import com.tappun.android.sensor.transition_activityrecognition_exampleapp.MainActivity
+
 
 
 class ActivityRecognitionSensor: AwareSensor() {
@@ -39,7 +43,6 @@ class ActivityRecognitionSensor: AwareSensor() {
 
         val CONFIG = Config()
 
-
         @RequiresApi(Build.VERSION_CODES.O)
         fun start(context: Context, config: Config? = null) {
             println("called fun start")
@@ -52,6 +55,7 @@ class ActivityRecognitionSensor: AwareSensor() {
         fun stop(context: Context) {
             context.stopService(Intent(context, ActivityRecognitionSensor::class.java))
         }
+
     }
 
     lateinit var mPendingIntent: PendingIntent
@@ -68,6 +72,14 @@ class ActivityRecognitionSensor: AwareSensor() {
 
                 ACTION_AWARE_ACTIVITYRECOGNITION_SYNC -> onSync(intent)
             }
+        }
+    }
+
+    override fun onBind(intent: Intent?): IBinder? = null
+
+    interface Observer {
+        fun onDataChanged(data: ActivityRecognitionData){
+            
         }
     }
 
@@ -137,6 +149,8 @@ class ActivityRecognitionSensor: AwareSensor() {
 
     override fun onDestroy() {
         super.onDestroy()
+
+        dbEngine?.close()
         unregisterReceiver(arReceiver)
     }
 
@@ -144,11 +158,6 @@ class ActivityRecognitionSensor: AwareSensor() {
         dbEngine?.startSync(ActivityRecognitionData.TABLE_NAME)
     }
 
-    override fun onBind(intent: Intent?): IBinder? = null
-
-    interface Observer {
-        fun onDataChanged(data: ActivityRecognitionData)
-    }
 
     data class Config(
         var sensorObserver: Observer? = null,
@@ -168,10 +177,6 @@ class ActivityRecognitionSensor: AwareSensor() {
 
     class ActivityRecognitionBroadcastReceiver : AwareSensor.SensorBroadcastReceiver() {
 
-        interface Observer {
-            fun onARDataReceived(data: ActivityRecognitionData)
-        }
-
         @RequiresApi(Build.VERSION_CODES.O)
         override fun onReceive(context: Context?, intent: Intent?) {
             context ?: return
@@ -180,10 +185,10 @@ class ActivityRecognitionSensor: AwareSensor() {
             val result = ActivityTransitionResult.extractResult(intent)!!
             for (event in result.transitionEvents) {
                 // chronological sequence of events....
-                var data:ActivityRecognitionData = ActivityRecognitionData()
-                data.detectedActivity = event.activityType.toString()
-                data.activityTransiton = event.transitionType.toString()
-                data.eventTimestamp = event.elapsedRealTimeNanos
+                var data = ActivityRecognitionData()
+                data.detectedActivity = event.activityType
+                data.activityTransiton = event.transitionType
+                data.timestamp = System.currentTimeMillis() / 1000
                 data.deviceId = CONFIG.deviceId
 
                 CONFIG.sensorObserver?.onDataChanged(data)
