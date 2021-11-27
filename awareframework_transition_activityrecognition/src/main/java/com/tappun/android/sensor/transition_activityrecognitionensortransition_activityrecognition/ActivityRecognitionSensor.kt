@@ -38,8 +38,11 @@ class ActivityRecognitionSensor: AwareSensor() {
 
         @RequiresApi(Build.VERSION_CODES.O)
         fun start(context: Context, config: Config? = null) {
+            println("called fun start")
             if (config != null)
                 CONFIG.replaceWith(config)
+
+            context.startService(Intent(context, ActivityRecognitionSensor::class.java))
         }
 
         fun stop(context: Context) {
@@ -61,6 +64,7 @@ class ActivityRecognitionSensor: AwareSensor() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         super.onStartCommand(intent, flags, startId)
+        println("called on start command")
 
         val openIntent = Intent(this, ActivityRecognitionSensor::class.java).let {
             PendingIntent.getActivity(this, 0, it, 0)
@@ -91,11 +95,13 @@ class ActivityRecognitionSensor: AwareSensor() {
             .requestActivityTransitionUpdates(request, openIntent)
 
         task.addOnSuccessListener {
-            print("handle success")
+            println("handle success")
         }
 
         task.addOnFailureListener { e: Exception ->
             // Handle error
+            println("error handle")
+            println(e.message)
         }
 
         return START_STICKY

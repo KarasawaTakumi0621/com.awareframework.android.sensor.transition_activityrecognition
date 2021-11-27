@@ -10,4 +10,4 @@ dependencyResolutionManagement {
 }
 rootProject.name = "com.awareframework.android.sensor.transition_activityrecognition_exampleapp"
 include ':app'
-include ':awareframework_transiton_activityrecognition'
+include ':awareframework_transition_activityrecognition'

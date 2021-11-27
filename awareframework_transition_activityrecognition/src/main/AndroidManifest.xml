@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.tappun.android.sensor.transition_activityrecognitionensortransition_activityrecognition">
+    <uses-permission android:name="com.google.android.gms.permission.ACTIVITY_RECOGNITION" />
+
+    <application>
+        <service
+            android:name=".ActivityRecognitionSensor"
+            android:exported="true" />
+
+        <receiver android:name=".ActivityRecognitionSensor$ActivityRecognitionBroadcastReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="com.tappun.android.sensor.transition_activityrecognition.SENSOR_START" />
+                <action android:name="com.tappun.android.sensor.transition_activityrecognition.SENSOR_STOP" />
+                <action android:name="com.tappun.android.sensor.SENSOR_START" />
+                <action android:name="com.tappun.android.sensor.SENSOR_STOP" />
+            </intent-filter>
+        </receiver>
+    </application>
+</manifest>
