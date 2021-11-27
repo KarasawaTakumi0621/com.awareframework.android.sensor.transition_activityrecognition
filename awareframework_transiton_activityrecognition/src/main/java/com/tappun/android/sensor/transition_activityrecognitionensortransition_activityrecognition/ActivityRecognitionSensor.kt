@@ -1,6 +1,7 @@
 package com.tappun.android.sensor.transition_activityrecognitionensortransition_activityrecognition
 
 import android.app.PendingIntent
+import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
@@ -13,7 +14,10 @@ import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
 import com.awareframework.android.core.AwareSensor
 import com.awareframework.android.core.model.SensorConfig
+import com.google.android.gms.location.*
 import com.tappun.android.sensor.transition_activityrecognitionensortransition_activityrecognition.model.ActivityRecognitionData
+//import com.tappun.android.sensor.transition_activityrecognition_exampleapp.MainActivity
+
 
 class ActivityRecognitionSensor: AwareSensor() {
 
@@ -31,25 +35,69 @@ class ActivityRecognitionSensor: AwareSensor() {
 
         val CONFIG = Config()
 
+
         @RequiresApi(Build.VERSION_CODES.O)
         fun start(context: Context, config: Config? = null) {
             if (config != null)
                 CONFIG.replaceWith(config)
-
-            context.startForegroundService(Intent(context, ActivityRecognitionSensor::class.java))
         }
 
         fun stop(context: Context) {
-            context.stopService(Intent(context, ActivityRecognitionSensor::class.java))
         }
     }
+
+    private val arReceiver = object : BroadcastReceiver(){
+        override fun onReceive(context: Context?, intent: Intent?) {
+
+            println("Pi!")
+        }
+    }
+
 
     override fun onCreate() {
         super.onCreate()
     }
 
+
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         super.onStartCommand(intent, flags, startId)
+
+        val openIntent = Intent(this, ActivityRecognitionSensor::class.java).let {
+            PendingIntent.getActivity(this, 0, it, 0)
+        }
+
+        val transitions = mutableListOf<ActivityTransition>()
+
+        transitions +=
+            ActivityTransition.Builder()
+                .setActivityType(DetectedActivity.IN_VEHICLE)
+                .setActivityTransition(ActivityTransition.ACTIVITY_TRANSITION_ENTER)
+                .build()
+
+        transitions +=
+            ActivityTransition.Builder()
+                .setActivityType(DetectedActivity.IN_VEHICLE)
+                .setActivityTransition(ActivityTransition.ACTIVITY_TRANSITION_EXIT)
+                .build()
+
+        transitions +=
+            ActivityTransition.Builder()
+                .setActivityType(DetectedActivity.WALKING)
+                .setActivityTransition(ActivityTransition.ACTIVITY_TRANSITION_EXIT)
+                .build()
+
+        val request = ActivityTransitionRequest(transitions)
+        val task = ActivityRecognition.getClient(applicationContext)
+            .requestActivityTransitionUpdates(request, openIntent)
+
+        task.addOnSuccessListener {
+            print("handle success")
+        }
+
+        task.addOnFailureListener { e: Exception ->
+            // Handle error
+        }
+
         return START_STICKY
     }
 
@@ -113,10 +161,12 @@ class ActivityRecognitionSensor: AwareSensor() {
 }
 
 private fun logd(text: String) {
-    if (ActivityRecognitionSensor.CONFIG.debug) Log.d(ActivityRecognitionSensor.TAG, text)
+    println(text)
+//    if (ActivityRecognitionSensor.CONFIG.debug) Log.d(ActivityRecognitionSensor.TAG, text)
 }
 
 private fun logw(text: String) {
-    Log.w(ActivityRecognitionSensor.TAG, text)
+    println(text)
+//    Log.w(ActivityRecognitionSensor.TAG, text)
 }
 

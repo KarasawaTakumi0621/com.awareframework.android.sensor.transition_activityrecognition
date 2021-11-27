@@ -5,6 +5,9 @@ import com.google.gson.Gson
 
 data class ActivityRecognitionData(
     var eventTimestamp: Long = 0L,
+    var detectedActivity: String = "",
+    var activityTransiton: String = "",
+
 ) : AwareObject(jsonVersion = 1){
     companion object {
         const val TABLE_NAME = "ActivityRecognitionData"
