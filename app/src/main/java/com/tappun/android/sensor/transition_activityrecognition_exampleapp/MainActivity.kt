@@ -31,7 +31,9 @@ class MainActivity : AppCompatActivity() {
         ActivityRecognitionSensor.start(applicationContext, ActivityRecognitionSensor.Config().apply {
             sensorObserver = object: ActivityRecognitionSensor.Observer{
                 override fun onDataChanged(data: ActivityRecognitionData) {
-                    print("pipipi")
+                    println("get on data changed")
+                    println(data)
+                    println("ababa")
                 }
             }
         })

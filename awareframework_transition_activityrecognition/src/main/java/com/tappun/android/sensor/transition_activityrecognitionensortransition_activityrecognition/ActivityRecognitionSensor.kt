@@ -50,6 +50,7 @@ class ActivityRecognitionSensor: AwareSensor() {
         }
 
         fun stop(context: Context) {
+            context.stopService(Intent(context, ActivityRecognitionSensor::class.java))
         }
     }
 
@@ -57,11 +58,18 @@ class ActivityRecognitionSensor: AwareSensor() {
 
     private val arReceiver = object : BroadcastReceiver(){
         override fun onReceive(context: Context?, intent: Intent?) {
+            intent ?: return
+            when (intent.action) {
+                ACTION_AWARE_ACTIVITYRECOGNITION_SET_LABEL -> {
+                    intent.getStringExtra(EXTRA_LABEL)?.let {
+                        CONFIG.label = it
+                    }
+                }
 
-            println("Pi!")
+                ACTION_AWARE_ACTIVITYRECOGNITION_SYNC -> onSync(intent)
+            }
         }
     }
-
 
     override fun onCreate() {
         super.onCreate()
@@ -82,10 +90,6 @@ class ActivityRecognitionSensor: AwareSensor() {
         intent.setAction(INTENT_ACTION)
 
         mPendingIntent = PendingIntent.getBroadcast(applicationContext, 0, intent, 0)
-//        val testIntent = Intent(ACTION_AWARE_ACTIVITYRECOGNITION)
-//        val openIntent = Intent(this, ActivityRecognitionBroadcastReceiver::class.java).let {
-//            PendingIntent.getActivity(this, 0, testIntent, 0)
-//        }
 
         val transitions = ArrayList<ActivityTransition>()
 
@@ -113,24 +117,14 @@ class ActivityRecognitionSensor: AwareSensor() {
 
         val task = ActivityRecognition.getClient(applicationContext)
             .requestActivityTransitionUpdates(request, mPendingIntent)
-//            .requestActivityUpdates(1000, mPendingIntent)
 
         task.addOnSuccessListener(
             object: OnSuccessListener<Void>{
                 override fun onSuccess(p0: Void?) {
-                    println("onSuccess pipipi")
+                    println("onSuccess")
                 }
             }
         )
-
-//        task.addOnSuccessListener {
-//            println("handle success")
-//
-//            registerReceiver(arReceiver, IntentFilter().apply {
-//                println("add action")
-//                addAction(ACTION_AWARE_ACTIVITYRECOGNITION)
-//            })
-//        }
 
         task.addOnFailureListener { e: Exception ->
             // Handle error
@@ -139,12 +133,10 @@ class ActivityRecognitionSensor: AwareSensor() {
         }
 
         return START_STICKY
-
     }
 
     override fun onDestroy() {
         super.onDestroy()
-
         unregisterReceiver(arReceiver)
     }
 
@@ -176,16 +168,26 @@ class ActivityRecognitionSensor: AwareSensor() {
 
     class ActivityRecognitionBroadcastReceiver : AwareSensor.SensorBroadcastReceiver() {
 
+        interface Observer {
+            fun onARDataReceived(data: ActivityRecognitionData)
+        }
+
         @RequiresApi(Build.VERSION_CODES.O)
         override fun onReceive(context: Context?, intent: Intent?) {
-            print("bobobo!")
+            context ?: return
+            logd("Sensor broadcast received. action: " + intent?.action)
+
             val result = ActivityTransitionResult.extractResult(intent)!!
             for (event in result.transitionEvents) {
                 // chronological sequence of events....
-                println(event)
+                var data:ActivityRecognitionData = ActivityRecognitionData()
+                data.detectedActivity = event.activityType.toString()
+                data.activityTransiton = event.transitionType.toString()
+                data.eventTimestamp = event.elapsedRealTimeNanos
+                data.deviceId = CONFIG.deviceId
+
+                CONFIG.sensorObserver?.onDataChanged(data)
             }
-//            context ?: return
-//            logd("Sensor broadcast received. action: " + intent?.action)
 
             when (intent?.action) {
                 SENSOR_START_ENABLED -> {
