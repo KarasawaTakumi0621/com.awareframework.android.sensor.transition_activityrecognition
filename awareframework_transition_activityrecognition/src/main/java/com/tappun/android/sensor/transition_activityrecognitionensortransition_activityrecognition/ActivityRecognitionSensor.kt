@@ -59,6 +59,12 @@ class ActivityRecognitionSensor: AwareSensor() {
 
     override fun onCreate() {
         super.onCreate()
+        initializeDbEngine(CONFIG)
+
+        registerReceiver(arReceiver, IntentFilter().apply {
+            addAction(ACTION_AWARE_ACTIVITYRECOGNITION_SET_LABEL)
+            addAction(ACTION_AWARE_ACTIVITYRECOGNITION_SYNC)
+        })
     }
 
 
@@ -96,6 +102,7 @@ class ActivityRecognitionSensor: AwareSensor() {
 
         task.addOnSuccessListener {
             println("handle success")
+
         }
 
         task.addOnFailureListener { e: Exception ->
@@ -105,6 +112,7 @@ class ActivityRecognitionSensor: AwareSensor() {
         }
 
         return START_STICKY
+
     }
 
     override fun onDestroy() {
