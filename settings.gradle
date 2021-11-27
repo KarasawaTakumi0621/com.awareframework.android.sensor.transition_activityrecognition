@@ -4,7 +4,10 @@ dependencyResolutionManagement {
         google()
         mavenCentral()
         jcenter() // Warning: this repository is going to shut down soon
+        maven { url 'https://jitpack.io' }
+        maven { url "https://s3.amazonaws.com/repo.commonsware.com" }
     }
 }
 rootProject.name = "com.awareframework.android.sensor.transition_activityrecognition_exampleapp"
 include ':app'
+include ':awareframework_transiton_activityrecognition'
