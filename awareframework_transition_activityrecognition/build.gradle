@@ -1,13 +1,14 @@
 plugins {
     id 'com.android.library'
     id 'kotlin-android'
+    id 'maven-publish'
 }
 
 android {
     compileSdk 30
 
     defaultConfig {
-        minSdk 20
+        minSdk 21
         targetSdk 30
         versionCode 1
         versionName "1.0"
@@ -23,8 +24,8 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
+        sourceCompatibility javaVersion
+        targetCompatibility javaVersion
     }
     kotlinOptions {
         jvmTarget = '1.8'
@@ -43,4 +44,19 @@ dependencies {
     api 'com.github.tetujin:com.awareframework.android.core:master-SNAPSHOT'
     implementation 'com.google.code.gson:gson:2.8.8'
     implementation 'com.google.android.gms:play-services-location:17.1.0'
+}
+
+afterEvaluate {
+    publishing {
+        publications {
+            release(MavenPublication) {
+                // The following applies a component to this publication
+                // which results in publishing an app bundle.
+                from components.release
+                groupId = 'com.github.KarasawaTakumi0621'
+                artifactId = 'com.awareframework.android.sensor.transition_activityrecognition'
+                version = '1.0'
+            }
+        }
+    }
 }
