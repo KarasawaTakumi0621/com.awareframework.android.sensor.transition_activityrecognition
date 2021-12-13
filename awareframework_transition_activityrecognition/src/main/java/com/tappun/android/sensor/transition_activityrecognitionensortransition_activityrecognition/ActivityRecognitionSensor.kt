@@ -6,25 +6,16 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.os.Build
-import android.os.Handler
-import android.os.HandlerThread
 import android.os.IBinder
 import android.util.Log
 import androidx.annotation.RequiresApi
-import androidx.core.app.NotificationCompat
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
-import androidx.transition.Transition
 import com.awareframework.android.core.AwareSensor
 import com.awareframework.android.core.model.SensorConfig
 import com.google.android.gms.location.*
 import com.google.android.gms.tasks.OnSuccessListener
 import com.tappun.android.sensor.transition_activityrecognitionensortransition_activityrecognition.model.ActivityRecognitionData
-import java.util.*
 import kotlin.collections.ArrayList
-
-//import com.tappun.android.sensor.transition_activityrecognition_exampleapp.MainActivity
-
-
 
 class ActivityRecognitionSensor: AwareSensor() {
 
@@ -81,7 +72,7 @@ class ActivityRecognitionSensor: AwareSensor() {
         override fun onReceive(contxt: Context?, intent: Intent?) {
             when (intent?.action) {
                 ACTION_AWARE_ACTIVITYRECOGNITION_SAVE -> {
-                    val data:ActivityRecognitionData? = intent?.getSerializableExtra("ardata") as? ActivityRecognitionData
+                    val data:ActivityRecognitionData? = intent.getSerializableExtra("ardata") as? ActivityRecognitionData
                     if(data != null){
                         dbEngine?.save(data, ActivityRecognitionData.TABLE_NAME)
                     }
@@ -204,7 +195,7 @@ class ActivityRecognitionSensor: AwareSensor() {
             val result = ActivityTransitionResult.extractResult(intent)!!
             for (event in result.transitionEvents) {
                 // chronological sequence of events....
-                var data = ActivityRecognitionData()
+                val data = ActivityRecognitionData()
                 data.detectedActivity = event.activityType
                 data.activityTransiton = event.transitionType
                 data.timestamp = System.currentTimeMillis() / 1000
@@ -225,24 +216,18 @@ class ActivityRecognitionSensor: AwareSensor() {
                     logd("Sensor enabled: " + CONFIG.enabled)
 
                     if (CONFIG.enabled) {
-                        if (context != null) {
-                            start(context)
-                        }
+                        start(context)
                     }
                 }
 
                 ACTION_AWARE_ACTIVITYRECOGNITION_STOP,
                 SENSOR_STOP_ALL -> {
-                    if (context != null) {
-                        stop(context)
-                    }
+                    stop(context)
                     logd("Stopping sensor.")
                 }
 
                 ACTION_AWARE_ACTIVITYRECOGNITION_START -> {
-                    if (context != null) {
-                        start(context)
-                    }
+                    start(context)
                 }
             }
         }
