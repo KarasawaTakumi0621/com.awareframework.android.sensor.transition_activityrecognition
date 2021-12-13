@@ -12,6 +12,7 @@ import android.os.IBinder
 import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
+import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.transition.Transition
 import com.awareframework.android.core.AwareSensor
 import com.awareframework.android.core.model.SensorConfig
@@ -28,13 +29,14 @@ import kotlin.collections.ArrayList
 class ActivityRecognitionSensor: AwareSensor() {
 
     companion object {
-        const val TAG = "AWARE::ActivityRecognition"
+        const val TAG = "AWARE::ActRec"
 
         const val ACTION_AWARE_ACTIVITYRECOGNITION = "ACTION_AWARE_ACTIVITYRECOGNITION"
 
         const val ACTION_AWARE_ACTIVITYRECOGNITION_START = "com.tappun.android.sensor.transition_activityrecognition.SENSOR_START"
         const val ACTION_AWARE_ACTIVITYRECOGNITION_STOP = "com.tappun.android.sensor.transition_activityrecognition.SENSOR_STOP"
         const val ACTION_AWARE_ACTIVITYRECOGNITION_SET_LABEL = "com.tappun.android.sensor.transition_activityrecognition.SET_LABEL"
+        const val ACTION_AWARE_ACTIVITYRECOGNITION_SAVE = "com.tappun.android.sensor.transition_activityrecognition.SAVE"
         const val EXTRA_LABEL = "label"
 
         const val ACTION_AWARE_ACTIVITYRECOGNITION_SYNC = "com.tappun.android.sensor.transition_activityrecognition.SENSOR_SYNC"
@@ -60,7 +62,7 @@ class ActivityRecognitionSensor: AwareSensor() {
 
     lateinit var mPendingIntent: PendingIntent
 
-    private val arReceiver = object : BroadcastReceiver(){
+    private val receiver = object : BroadcastReceiver(){
         override fun onReceive(context: Context?, intent: Intent?) {
             intent ?: return
             when (intent.action) {
@@ -71,6 +73,19 @@ class ActivityRecognitionSensor: AwareSensor() {
                 }
 
                 ACTION_AWARE_ACTIVITYRECOGNITION_SYNC -> onSync(intent)
+            }
+        }
+    }
+
+    val arReceiver = object : BroadcastReceiver() {
+        override fun onReceive(contxt: Context?, intent: Intent?) {
+            when (intent?.action) {
+                ACTION_AWARE_ACTIVITYRECOGNITION_SAVE -> {
+                    val data:ActivityRecognitionData? = intent?.getSerializableExtra("ardata") as? ActivityRecognitionData
+                    if(data != null){
+                        dbEngine?.save(data, ActivityRecognitionData.TABLE_NAME)
+                    }
+                }
             }
         }
     }
@@ -87,10 +102,13 @@ class ActivityRecognitionSensor: AwareSensor() {
         super.onCreate()
         initializeDbEngine(CONFIG)
 
-        registerReceiver(arReceiver, IntentFilter().apply {
+        registerReceiver(receiver, IntentFilter().apply {
             addAction(ACTION_AWARE_ACTIVITYRECOGNITION_SET_LABEL)
             addAction(ACTION_AWARE_ACTIVITYRECOGNITION_SYNC)
         })
+
+        LocalBroadcastManager.getInstance(this)
+            .registerReceiver(arReceiver, IntentFilter(ACTION_AWARE_ACTIVITYRECOGNITION_SAVE))
     }
 
 
@@ -151,7 +169,10 @@ class ActivityRecognitionSensor: AwareSensor() {
         super.onDestroy()
 
         dbEngine?.close()
-        unregisterReceiver(arReceiver)
+        unregisterReceiver(receiver)
+        LocalBroadcastManager.getInstance(this)
+            .unregisterReceiver(arReceiver)
+
     }
 
     override fun onSync(intent: Intent?) {
@@ -161,7 +182,6 @@ class ActivityRecognitionSensor: AwareSensor() {
 
     data class Config(
         var sensorObserver: Observer? = null,
-        var interval: Int = 10000,
 
         ) : SensorConfig(dbPath = "activityrecognition_data") {
 
@@ -170,7 +190,6 @@ class ActivityRecognitionSensor: AwareSensor() {
 
             if (config is Config) {
                 sensorObserver = config.sensorObserver
-                interval = config.interval
             }
         }
     }
@@ -190,8 +209,15 @@ class ActivityRecognitionSensor: AwareSensor() {
                 data.activityTransiton = event.transitionType
                 data.timestamp = System.currentTimeMillis() / 1000
                 data.deviceId = CONFIG.deviceId
+                data.label = CONFIG.label
 
                 CONFIG.sensorObserver?.onDataChanged(data)
+
+                Intent().also { intent ->
+                    intent.setAction(ACTION_AWARE_ACTIVITYRECOGNITION_SAVE)
+                    intent.putExtra("ardata", data)
+                    LocalBroadcastManager.getInstance(context).sendBroadcast(intent)
+                }
             }
 
             when (intent?.action) {
